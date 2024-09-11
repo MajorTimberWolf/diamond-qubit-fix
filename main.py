@@ -1,45 +1,43 @@
-# main.py
-
 import cirq
 from qubit_initialization import create_qubit_cirq
 from qubit_characterization import measure_t1_t2, characterize_noise
-from decoupling_sequences import choose_decoupling_sequence
-from simulation import simulate_with_dynamic_feedback
-from adaptive_control import real_time_feedback_control  # Use only necessary imports
-from benchmarking import advanced_randomized_benchmarking, process_tomography
-from plotting import plot_results_cirq
+from decoupling_sequences import (
+    choose_decoupling_sequence, udd_sequence, cpmg_sequence, cdd_sequence
+)
+from simulation import simulate_without_noise
+from real_time_feedback import real_time_feedback_control
+from benchmarking import advanced_randomized_benchmarking
+from plotting import plot_results_cirq, print_result_info
 
 # Step 1: Initialize Qubit and Simulator
 qubit, base_circuit = create_qubit_cirq(state='+')  # Initialize qubit in |+⟩ state
 simulator = cirq.Simulator()
+init_result = simulator.run(base_circuit, repetitions=1000)
+init_state_counts = init_result.histogram(key='init_state')
+print(f"Initial state counts: {init_state_counts}")
 
-# Step 2: Characterize Qubit Interactions and Noise Profiles
+# Step 2: Characterize Qubit Interactions
 t1, t2 = measure_t1_t2(qubit, simulator)
-print(f"Measured T1 Time: {t1:.2f} ns, T2 Time: {t2:.2f} ns")
-
-# Ensure to pass simulator to characterize_noise
 noise_profile = characterize_noise(qubit, simulator)
-print(f"Characterized Noise Profile: {noise_profile}")
+print(f"Measured T1 Time: {t1:.2f} ns, T2 Time: {t2:.2f} ns")
+print(f"Noise Profile: {noise_profile}")
 
-# Step 3: Choose Optimal Dynamical Decoupling Sequence
-chosen_sequence = choose_decoupling_sequence(qubit, noise_profile)
-circuit = cirq.Circuit(chosen_sequence)
+# Step 3: Apply Different Decoupling Sequences
+sequences = {
+    'UDD': udd_sequence(qubit, n=5, total_duration=1000),
+    'CPMG': cpmg_sequence(qubit, n=10, tau=100),
+    'CDD': cdd_sequence(qubit, levels=3)
+}
 
-# Step 4: Simulate with Dynamic Feedback Control
-final_result = simulate_with_dynamic_feedback(qubit, simulator, circuit)
+results = []
+labels = []
 
-# Step 5: Benchmark and Validate Effectiveness
-fidelity = advanced_randomized_benchmarking(circuit, simulator)
-print(f"Fidelity after applying dynamical decoupling: {fidelity:.4f}")
+# Run simulation for each sequence
+for label, seq in sequences.items():
+    print(f"Starting simulation for {label} sequence...")
+    result = simulate_without_noise(qubit, simulator, seq)
+    results.append(result)
+    labels.append(label)
 
-# Optionally, conduct process tomography
-process_matrix = process_tomography(circuit, simulator)
-
-# Step 6: Plot Results
-# Ensure to pass the correct parameters, including time_steps
-plot_results_cirq([final_result], ['Dynamic Feedback with Tailored Decoupling'], time_steps=100)
-
-# Step 7: Output Results
-print(f"Final T1 Time: {t1:.2f} ns, T2 Time: {t2:.2f} ns")
-print(f"Final Noise Profile: {noise_profile}")
-print(f"Final Benchmark Fidelity: {fidelity:.4f}")
+# Step 4: Plot Results
+plot_results_cirq(results, labels, time_steps=100)

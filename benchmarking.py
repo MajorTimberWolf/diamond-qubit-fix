@@ -1,9 +1,7 @@
-# benchmarking.py
-
 import cirq
 import numpy as np
 
-def advanced_randomized_benchmarking(circuit, simulator, repetitions=1000):
+def advanced_randomized_benchmarking(circuit, simulator, target_state='0', repetitions=1000):
     """
     Performs advanced randomized benchmarking to assess the effectiveness of decoupling sequences.
 
@@ -25,40 +23,26 @@ def advanced_randomized_benchmarking(circuit, simulator, repetitions=1000):
     results = simulator.run(circuit, repetitions=repetitions)
 
     # Calculate fidelity based on results
-    fidelity = calculate_fidelity_from_results(results)
+    fidelity = calculate_fidelity_from_results(results, target_state=target_state)
     return fidelity
 
-def calculate_fidelity_from_results(results):
+def calculate_fidelity_from_results(results, target_state=0):
     """
     Calculate the fidelity from measurement results.
 
     Parameters:
     - results: Measurement results from the quantum simulator.
+    - target_state: The target state to compare measurements against.
 
     Returns:
     - fidelity: The calculated fidelity.
     """
     # Get measurement results
-    measurement_results = results.data['result']
-
-    # Calculate probability of measuring |0⟩
-    num_zeros = np.sum(measurement_results == 0)
+    measurement_results = results.measurements['result']
+    num_target = np.sum(measurement_results == int(target_state))
     total = len(measurement_results)
     
-    # Fidelity is the probability of returning to the initial state
-    fidelity = num_zeros / total if total > 0 else 0
+    # Ensure that the fidelity calculation is based on correct interpretation
+    fidelity = num_target / total if total > 0 else 0
+    
     return fidelity
-
-def process_tomography(circuit, simulator):
-    """
-    Conducts quantum process tomography to analyze specific types of errors.
-
-    Parameters:
-    - circuit: The quantum circuit to perform tomography.
-    - simulator: The quantum simulator to run the tomography.
-
-    Returns:
-    - process_matrix: The reconstructed process matrix.
-    """
-    # Placeholder: Implement process tomography
-    pass

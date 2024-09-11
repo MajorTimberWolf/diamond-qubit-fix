@@ -3,22 +3,9 @@
 import cirq
 
 def create_qubit_cirq(state='0', position=(0, 0)):
-    """
-    Initializes a qubit at a given grid position to a specified quantum state.
-
-    Parameters:
-    - state: The desired state to initialize the qubit ('0', '1', '+', '-').
-    - position: A tuple specifying the grid position of the qubit (row, column).
-
-    Returns:
-    - qubit: The initialized cirq.GridQubit object.
-    - circuit: A cirq.Circuit object containing the operations to initialize the qubit.
-    """
-    # Initialize the qubit at the specified grid position
-    qubit = cirq.GridQubit(position[0], position[1])
+    qubit = cirq.GridQubit(*position)
     circuit = cirq.Circuit()
-
-    # Prepare the initial state
+    
     if state == '0':
         pass  # |0> is the default state
     elif state == '1':
@@ -28,8 +15,11 @@ def create_qubit_cirq(state='0', position=(0, 0)):
     elif state == '-':
         circuit.append([cirq.X(qubit), cirq.H(qubit)])
     else:
-        raise ValueError(f"Invalid state '{state}' provided. Please choose from '0', '1', '+', or '-'.")
-
+        raise ValueError(f"Invalid state '{state}' provided.")
+    
+    # Add a measurement to verify the initial state
+    circuit.append(cirq.measure(qubit, key='init_state'))
+    
     return qubit, circuit
 
 

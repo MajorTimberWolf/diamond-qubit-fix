@@ -1,31 +1,49 @@
-# plotting.py
-
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
+import cirq
 
 def plot_results_cirq(results, labels, time_steps):
-    """
-    Plots the results of the simulation, showing qubit fidelity over time.
-
-    Parameters:
-    - results: List of simulation results.
-    - labels: List of labels for each result set.
-    - time_steps: The number of time steps for the simulation.
-    """
     plt.figure(figsize=(10, 6))
-
-    # Process and plot each result
+    
     for result, label in zip(results, labels):
-        # Convert measurement results into a probability of '0' state over time
-        counts = result.histogram(key='result')
-        prob_0 = counts.get(0, 0) / sum(counts.values()) if counts else 0
-        times = np.arange(1, time_steps + 1)
-        fidelities = [prob_0] * len(times)  # Example fidelity; adjust as needed
-        plt.plot(times, fidelities, label=label)
-
-    plt.xlabel('Time Steps')
-    plt.ylabel('Probability of |0⟩')
+        if isinstance(result, cirq.ResultDict):
+            data = result.measurements['result']
+        elif isinstance(result.data['result'], pd.Series):
+            data = result.data['result'].values
+        else:
+            data = result.data['result']
+        
+        prob_0 = []
+        for i in range(0, len(data), time_steps):
+            chunk = data[i:i+time_steps]
+            count_0 = np.sum(chunk == 0)
+            if len(chunk) > 0:
+                prob_0.append(count_0 / len(chunk))
+            else:
+                prob_0.append(0)  # Handle empty chunks to avoid division by zero
+        
+        plt.plot(range(len(prob_0)), prob_0, label=label)
+    
+    plt.xlabel('Measurement Cycle')
+    plt.ylabel('Probability of |0>')
     plt.title('Qubit Fidelity During Measurement')
     plt.legend()
     plt.grid(True)
+    plt.savefig('graphs/qubit_fidelity_plot.png')
     plt.show()
+
+def print_result_info(result):
+    print(f"Result type: {type(result)}")
+    if isinstance(result, cirq.ResultDict):
+        print(f"Params: {result.params}")
+        print(f"Measurements keys: {result.measurements.keys()}")
+        if 'result' in result.measurements:
+            print(f"First few results: {result.measurements['result'][:10]}")
+    elif hasattr(result, 'data'):
+        print(f"Data keys: {result.data.keys()}")
+        if 'result' in result.data:
+            print(f"Result data type: {type(result.data['result'])}")
+            print(f"First few results: {result.data['result'][:10]}")
+    else:
+        print("Unexpected result format")

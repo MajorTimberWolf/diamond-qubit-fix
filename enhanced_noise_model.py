@@ -1,5 +1,3 @@
-# enhanced_noise_model.py
-
 import cirq
 
 class AdvancedNoiseModel(cirq.NoiseModel):
