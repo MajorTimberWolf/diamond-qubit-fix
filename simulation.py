@@ -1,33 +1,32 @@
 # simulation.py
 
 import cirq
+from dynamic_decoupling import *
+from decoupling_sequences import choose_decoupling_sequence
+from qubit_characterization import measure_t1_t2, characterize_noise
+from adaptive_control import real_time_feedback_control
 
-class CustomNoiseModel(cirq.NoiseModel):
-    def __init__(self, noise_strength):
-        self.noise_strength = noise_strength
-        self.depolarizing_noise = cirq.depolarize(p=noise_strength)  # Depolarizing noise
-        self.amplitude_damping_noise = cirq.amplitude_damp(gamma=noise_strength)  # Amplitude damping noise
+def simulate_with_dynamic_feedback(qubit, simulator, initial_sequence):
+    """
+    Simulates the qubit dynamics with real-time feedback to adjust decoupling sequences.
 
-    def noisy_operation(self, operation):
-        # Apply both depolarizing and amplitude damping noise to each operation
-        if cirq.num_qubits(operation) == 1:
-            return [
-                self.depolarizing_noise.on(operation.qubits[0]),
-                self.amplitude_damping_noise.on(operation.qubits[0]),
-                operation
-            ]
-        else:
-            return operation
+    Parameters:
+    - qubit: The target qubit.
+    - simulator: The quantum simulator.
+    - initial_sequence: The initial decoupling sequence.
 
-def simulate_measurement_cirq(circuit, noise_strength=0.3, repetitions=1000):
-    # Use the custom noise model
-    noise_model = CustomNoiseModel(noise_strength)
+    Returns:
+    - final_result: The result of the simulation with dynamic adjustments.
+    """
+    noise_profile = characterize_noise(qubit)
+    t1, t2 = measure_t1_t2(qubit, simulator)
 
-    # Apply the custom noise model to the circuit
-    noisy_circuit = cirq.Circuit(cirq.NoiseModel.from_noise_model_like(noise_model).noisy_moments(circuit.moments, circuit.all_qubits()))
+    chosen_sequence = choose_decoupling_sequence(qubit, noise_profile)
+    circuit = cirq.Circuit(chosen_sequence)
     
-    # Run the simulation
-    simulator = cirq.Simulator()
-    result = simulator.run(noisy_circuit, repetitions=repetitions)
-    
-    return result
+    # Simulate with feedback adjustments
+    measurements = simulator.run(circuit)
+    adjusted_sequence = real_time_feedback_control(circuit, measurements)
+    final_result = simulator.run(adjusted_sequence)
+
+    return final_result
