@@ -2,33 +2,52 @@
 
 import cirq
 
-def real_time_feedback_control(circuit, measurements, noise_profile, threshold=0.1):
+# adaptive_control.py
+
+import cirq
+from decoupling_sequences import choose_decoupling_sequence
+
+def real_time_feedback_control(circuit, measurements, noise_profile, qubit):
     """
-    Adaptively adjusts the decoupling sequences based on real-time feedback from measurements.
+    Dynamically adjusts decoupling sequences based on noise profile and measurement results.
 
     Parameters:
-    - circuit: The quantum circuit to adjust.
-    - measurements: The results of previous measurements.
-    - noise_profile: The noise profile of the qubit.
-    - threshold: A threshold value for determining when to adapt the sequence.
+    - circuit: The quantum circuit currently in use.
+    - measurements: Results from the previous simulation or experiment.
+    - noise_profile: Dictionary containing noise characteristics.
+    - qubit: The target qubit for applying decoupling sequences.
 
     Returns:
-    - adjusted_circuit: The adjusted quantum circuit with modified sequences.
+    - adjusted_circuit: A cirq.Circuit object with updated decoupling sequences.
     """
-    # Analyze measurements to determine the current state fidelity
-    fidelity = calculate_fidelity_from_measurements(measurements)
+    # Extract noise parameters
+    low_freq_noise = noise_profile.get("low_frequency_noise", 0)
+    high_freq_noise = noise_profile.get("high_frequency_noise", 0)
+    correlated_noise = noise_profile.get("correlated_noise", 0)
 
-    # Adjust decoupling sequences based on fidelity and noise profile
-    if fidelity < threshold:
-        # Increase the number of pulses or adjust the sequence timing
-        if noise_profile["low_frequency_noise"] > noise_profile["high_frequency_noise"]:
-            adjusted_circuit = circuit + cirq.Circuit(cirq.X(cirq.NamedQubit('q0')))  # Example: Add an X gate
-        elif noise_profile["high_frequency_noise"] > noise_profile["low_frequency_noise"]:
-            adjusted_circuit = circuit + cirq.Circuit(cirq.Y(cirq.NamedQubit('q0')))  # Example: Add a Y gate
-        else:
-            adjusted_circuit = circuit + cirq.Circuit(cirq.Z(cirq.NamedQubit('q0')))  # Example: Add a Z gate
+    # Determine the most dominant noise type
+    if low_freq_noise > high_freq_noise and low_freq_noise > correlated_noise:
+        noise_type = "low_frequency"
+    elif high_freq_noise > low_freq_noise and high_freq_noise > correlated_noise:
+        noise_type = "high_frequency"
     else:
-        adjusted_circuit = circuit  # No changes if fidelity is above the threshold
+        noise_type = "correlated"
+
+    # Log the current noise profile and chosen sequence for debugging
+    print(f"Noise profile: {noise_profile}")
+    print(f"Dominant noise type: {noise_type}")
+
+    # Choose an appropriate decoupling sequence based on the noise profile
+    chosen_sequence = choose_decoupling_sequence(qubit, noise_profile)
+
+    # Create a new circuit with updated sequence
+    adjusted_circuit = cirq.Circuit()
+
+    # Update the circuit by incorporating chosen decoupling sequence
+    adjusted_circuit.append(chosen_sequence)
+    
+    # Add measurement gate to capture new measurements
+    adjusted_circuit.append(cirq.measure(qubit, key='result'))
 
     return adjusted_circuit
 

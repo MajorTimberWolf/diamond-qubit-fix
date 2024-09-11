@@ -18,7 +18,8 @@ def advanced_randomized_benchmarking(circuit, simulator, repetitions=1000):
     # Ensure measurement gate is present
     if not any(isinstance(op.gate, cirq.MeasurementGate) for op in circuit.all_operations()):
         qubits = list(circuit.all_qubits())  # Convert frozenset to list
-        circuit.append(cirq.measure(qubits[0], key='result'))  # Measure the first qubit
+        if len(qubits) > 0:
+            circuit.append(cirq.measure(qubits[0], key='result'))  # Measure the first qubit
 
     # Run the circuit and collect results
     results = simulator.run(circuit, repetitions=repetitions)
@@ -37,8 +38,14 @@ def calculate_fidelity_from_results(results):
     Returns:
     - fidelity: The calculated fidelity.
     """
-    num_zeros = sum(1 for result in results.measurements['result'] if result == 0)
-    total = len(results.measurements['result'])
+    # Get measurement results
+    measurement_results = results.data['result']
+
+    # Calculate probability of measuring |0⟩
+    num_zeros = np.sum(measurement_results == 0)
+    total = len(measurement_results)
+    
+    # Fidelity is the probability of returning to the initial state
     fidelity = num_zeros / total if total > 0 else 0
     return fidelity
 

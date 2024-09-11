@@ -3,20 +3,23 @@
 import cirq
 from qubit_initialization import create_qubit_cirq
 from qubit_characterization import measure_t1_t2, characterize_noise
-from dynamic_decoupling import udd_sequence, cdd_sequence, cpmg_sequence
 from decoupling_sequences import choose_decoupling_sequence
 from simulation import simulate_with_dynamic_feedback
-from adaptive_control import real_time_feedback_control  # Newly added import
+from adaptive_control import real_time_feedback_control  # Use only necessary imports
 from benchmarking import advanced_randomized_benchmarking, process_tomography
 from plotting import plot_results_cirq
 
 # Step 1: Initialize Qubit and Simulator
-qubit, base_circuit = create_qubit_cirq('+')  # Initialize qubit in |+⟩ state
+qubit, base_circuit = create_qubit_cirq(state='+')  # Initialize qubit in |+⟩ state
 simulator = cirq.Simulator()
 
 # Step 2: Characterize Qubit Interactions and Noise Profiles
 t1, t2 = measure_t1_t2(qubit, simulator)
-noise_profile = characterize_noise(qubit)
+print(f"Measured T1 Time: {t1:.2f} ns, T2 Time: {t2:.2f} ns")
+
+# Ensure to pass simulator to characterize_noise
+noise_profile = characterize_noise(qubit, simulator)
+print(f"Characterized Noise Profile: {noise_profile}")
 
 # Step 3: Choose Optimal Dynamical Decoupling Sequence
 chosen_sequence = choose_decoupling_sequence(qubit, noise_profile)
@@ -33,9 +36,10 @@ print(f"Fidelity after applying dynamical decoupling: {fidelity:.4f}")
 process_matrix = process_tomography(circuit, simulator)
 
 # Step 6: Plot Results
-plot_results_cirq([final_result], ['Dynamic Feedback with Tailored Decoupling'])
+# Ensure to pass the correct parameters, including time_steps
+plot_results_cirq([final_result], ['Dynamic Feedback with Tailored Decoupling'], time_steps=100)
 
 # Step 7: Output Results
-print(f"T1 Time: {t1:.2f} ns, T2 Time: {t2:.2f} ns")
-print(f"Noise Profile: {noise_profile}")
+print(f"Final T1 Time: {t1:.2f} ns, T2 Time: {t2:.2f} ns")
+print(f"Final Noise Profile: {noise_profile}")
 print(f"Final Benchmark Fidelity: {fidelity:.4f}")
