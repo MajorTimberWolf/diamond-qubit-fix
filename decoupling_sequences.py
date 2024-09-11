@@ -21,7 +21,7 @@ def bb1_sequence_cirq(phi):
     
     return circuit
 
-def udd_sequence_cirq(n, total_duration=1000):
+def udd_sequence_cirq(n=5, total_duration=1000):
     qubit, circuit = create_qubit_cirq()
     
     def tj(j):
