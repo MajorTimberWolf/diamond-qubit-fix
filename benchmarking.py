@@ -15,8 +15,31 @@ def advanced_randomized_benchmarking(circuit, simulator, repetitions=1000):
     Returns:
     - fidelity: The calculated fidelity of the sequence.
     """
+    # Ensure measurement gate is present
+    if not any(isinstance(op.gate, cirq.MeasurementGate) for op in circuit.all_operations()):
+        qubits = list(circuit.all_qubits())  # Convert frozenset to list
+        circuit.append(cirq.measure(qubits[0], key='result'))  # Measure the first qubit
+
+    # Run the circuit and collect results
     results = simulator.run(circuit, repetitions=repetitions)
-    fidelity = np.mean(results.measurements['result'])
+
+    # Calculate fidelity based on results
+    fidelity = calculate_fidelity_from_results(results)
+    return fidelity
+
+def calculate_fidelity_from_results(results):
+    """
+    Calculate the fidelity from measurement results.
+
+    Parameters:
+    - results: Measurement results from the quantum simulator.
+
+    Returns:
+    - fidelity: The calculated fidelity.
+    """
+    num_zeros = sum(1 for result in results.measurements['result'] if result == 0)
+    total = len(results.measurements['result'])
+    fidelity = num_zeros / total if total > 0 else 0
     return fidelity
 
 def process_tomography(circuit, simulator):

@@ -16,6 +16,7 @@ def udd_sequence(qubit, n, total_duration):
     - udd_circuit: A cirq.Circuit object implementing the UDD sequence.
     """
     udd_circuit = cirq.Circuit()
+    
     def tj(j):
         return np.sin(np.pi * j / (2 * n + 2))**2
 
@@ -24,13 +25,13 @@ def udd_sequence(qubit, n, total_duration):
         t = int(round(tj(j) * total_duration))
         delay_duration = t - last_t
         if delay_duration > 0:
-            udd_circuit.append(cirq.wait(qubit, delay_duration))
+            udd_circuit.append(cirq.WaitGate(cirq.Duration(nanos=delay_duration)).on(qubit))
         udd_circuit.append(cirq.X(qubit))
         last_t = t
 
     final_delay = total_duration - last_t
     if final_delay > 0:
-        udd_circuit.append(cirq.wait(qubit, final_delay))
+        udd_circuit.append(cirq.WaitGate(cirq.Duration(nanos=final_delay)).on(qubit))
 
     return udd_circuit
 
@@ -67,8 +68,7 @@ def cpmg_sequence(qubit, n, tau):
     """
     cpmg_circuit = cirq.Circuit()
     for _ in range(n):
-        cpmg_circuit.append(cirq.wait(qubit, tau))
+        cpmg_circuit.append(cirq.WaitGate(cirq.Duration(nanos=tau)).on(qubit))
         cpmg_circuit.append(cirq.X(qubit))
-        cpmg_circuit.append(cirq.wait(qubit, tau))
+        cpmg_circuit.append(cirq.WaitGate(cirq.Duration(nanos=tau)).on(qubit))
     return cpmg_circuit
-

@@ -1,35 +1,41 @@
 # main.py
 
-import cirq 
-import numpy as np
-import matplotlib.pyplot as plt
+import cirq
 from qubit_initialization import create_qubit_cirq
-from decoupling_sequences import bb1_sequence_cirq, udd_sequence_cirq
-from simulation import simulate_measurement_cirq
+from qubit_characterization import measure_t1_t2, characterize_noise
+from dynamic_decoupling import udd_sequence, cdd_sequence, cpmg_sequence
+from decoupling_sequences import choose_decoupling_sequence
+from simulation import simulate_with_dynamic_feedback
+from adaptive_control import real_time_feedback_control  # Newly added import
+from benchmarking import advanced_randomized_benchmarking, process_tomography
 from plotting import plot_results_cirq
 
-# Main simulation
-qubit, base_circuit = create_qubit_cirq('+')  # Create a qubit in the |+⟩ state
+# Step 1: Initialize Qubit and Simulator
+qubit, base_circuit = create_qubit_cirq('+')  # Initialize qubit in |+⟩ state
+simulator = cirq.Simulator()
 
-# Experiment with different noise strengths and parameters
-noise_strengths = [0.1, 0.2, 0.3]  # Different noise strengths to test
-n_values = [3, 5, 7]  # Different numbers of pulses for UDD sequence
+# Step 2: Characterize Qubit Interactions and Noise Profiles
+t1, t2 = measure_t1_t2(qubit, simulator)
+noise_profile = characterize_noise(qubit)
 
-for noise_strength in noise_strengths:
-    for n in n_values:
-        # Simulate measurement with different decoupling sequences
-        no_decoupling = cirq.Circuit(cirq.measure(cirq.GridQubit(0, 0), key='result'))
-        bb1_circuit = bb1_sequence_cirq(np.pi / 2)
-        udd_circuit = udd_sequence_cirq(n=n, total_duration=1000)  # Specify total_duration and pulses
+# Step 3: Choose Optimal Dynamical Decoupling Sequence
+chosen_sequence = choose_decoupling_sequence(qubit, noise_profile)
+circuit = cirq.Circuit(chosen_sequence)
 
-        # Get simulation results
-        results = [
-            simulate_measurement_cirq(no_decoupling, noise_strength=noise_strength),
-            simulate_measurement_cirq(bb1_circuit, noise_strength=noise_strength),
-            simulate_measurement_cirq(udd_circuit, noise_strength=noise_strength)
-        ]
+# Step 4: Simulate with Dynamic Feedback Control
+final_result = simulate_with_dynamic_feedback(qubit, simulator, circuit)
 
-        # Plot results
-        plot_results_cirq(results, [f'No Decoupling (Noise {noise_strength})', 
-                                    f'BB1 Sequence (Noise {noise_strength})', 
-                                    f'UDD Sequence (n={n}, Noise {noise_strength})'])
+# Step 5: Benchmark and Validate Effectiveness
+fidelity = advanced_randomized_benchmarking(circuit, simulator)
+print(f"Fidelity after applying dynamical decoupling: {fidelity:.4f}")
+
+# Optionally, conduct process tomography
+process_matrix = process_tomography(circuit, simulator)
+
+# Step 6: Plot Results
+plot_results_cirq([final_result], ['Dynamic Feedback with Tailored Decoupling'])
+
+# Step 7: Output Results
+print(f"T1 Time: {t1:.2f} ns, T2 Time: {t2:.2f} ns")
+print(f"Noise Profile: {noise_profile}")
+print(f"Final Benchmark Fidelity: {fidelity:.4f}")

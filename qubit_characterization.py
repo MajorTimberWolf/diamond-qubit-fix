@@ -19,7 +19,13 @@ def measure_t1_t2(qubit, simulator, repetitions=1000):
     # Define the initial circuit to prepare the qubit in superposition
     circuit = cirq.Circuit()
     circuit.append(cirq.H(qubit))
-    circuit.append(cirq.wait_gate(qubit, duration=cirq.Duration(nanos=1)))  # Placeholder wait gate for T1 and T2 measurement
+
+    # Use cirq.WaitGate to add a delay
+    wait_gate = cirq.WaitGate(cirq.Duration(nanos=1))
+    circuit.append(wait_gate.on(qubit))
+
+    # Add a measurement gate to the circuit
+    circuit.append(cirq.measure(qubit, key='result'))
 
     # Run the circuit and collect results
     result = simulator.run(circuit, repetitions=repetitions)
@@ -47,4 +53,3 @@ def characterize_noise(qubit):
         "correlated_noise": np.random.uniform(0, 0.05)
     }
     return noise_profile
-
