@@ -1,6 +1,6 @@
 # main.py
 
-import cirq  # Import Cirq to use its functionalities
+import cirq 
 import numpy as np
 import matplotlib.pyplot as plt
 from qubit_initialization import create_qubit_cirq

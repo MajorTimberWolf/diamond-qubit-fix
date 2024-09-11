@@ -19,7 +19,7 @@ class CustomNoiseModel(cirq.NoiseModel):
         else:
             return operation
 
-def simulate_measurement_cirq(circuit, noise_strength=0.1, repetitions=1000):
+def simulate_measurement_cirq(circuit, noise_strength=0.3, repetitions=1000):
     # Use the custom noise model
     noise_model = CustomNoiseModel(noise_strength)
 
