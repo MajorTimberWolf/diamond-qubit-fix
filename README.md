@@ -1,6 +1,6 @@
 # Adaptive Quantum Decoupling Sequences
 
-This repository contains an implementation of adaptive quantum decoupling sequences designed to improve the coherence and reduce the decoherence of qubits in a quantum processor. The work is based on and improves upon the techniques presented in the paper [Nature: "Dynamical decoupling for quantum computing with solid-state spins"](https://www.nature.com/articles/s41586-022-04819-6).
+This repository contains an implementation of adaptive quantum decoupling sequences designed to improve the coherence and reduce the decoherence of qubits in a quantum processor. The work is based on and improves upon the techniques presented in the paper [Nature: "Fault-tolerant operation of a logical qubit in a diamond quantum processor"](https://www.nature.com/articles/s41586-022-04819-6).
 
 ## Project Overview
 
@@ -69,4 +69,4 @@ This project is licensed under the MIT License.
 
 ## References
 
-- [Nature: "Dynamical decoupling for quantum computing with solid-state spins"](https://www.nature.com/articles/s41586-022-04819-6)
+- [Nature: "Fault-tolerant operation of a logical qubit in a diamond quantum processor"](https://www.nature.com/articles/s41586-022-04819-6)
